@@ -66,6 +66,13 @@ export function GoldChart({ currentTick }: GoldChartProps) {
     const history = goldMarketFeed.getHistory(timeframe);
     setCandles(history);
 
+    // Fetch fresh live candles for this timeframe from API
+    goldMarketFeed.fetchTimeframeHistory(timeframe).then((fresh) => {
+      if (fresh && fresh.length > 0) {
+        setCandles(fresh);
+      }
+    });
+
     const unsubscribe = goldMarketFeed.subscribeCandles((updated) => {
       setCandles((prev) => {
         if (prev.length === 0) return [updated];
