@@ -8,20 +8,33 @@ import { PositionsTable } from "@/components/trading/PositionsTable";
 import { goldMarketFeed } from "@/lib/trading/market-feed";
 import { TradingEngine } from "@/lib/trading/engine";
 import { LedgerEngine } from "@/lib/ledger/service";
-import { getActiveDemoSession } from "@/lib/auth/demo-session";
 import { createClient } from "@/lib/supabase/browser";
 import { AccountSummary, GoldTick, Position, TradeDirection, OrderType } from "@/types/trading";
 import { formatMoney } from "@/lib/money";
 import {
   ArrowLeft,
   PlusCircle,
-  Sparkles,
   CheckCircle2,
   Scale,
+  Lock,
+  User,
+  LogOut,
+  UserPlus,
+  LogIn,
+  ShieldCheck,
 } from "lucide-react";
 
+interface ActiveUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  isDemo: boolean;
+}
+
 export default function TradePage() {
-  const user = getActiveDemoSession("client");
+  const [currentUser, setCurrentUser] = useState<ActiveUser | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [currentTick, setCurrentTick] = useState<GoldTick>(() =>
     goldMarketFeed.getCurrentTick()
   );
@@ -42,14 +55,55 @@ export default function TradePage() {
   const [clientAccId, setClientAccId] = useState<string>("");
   const [floatAccId, setFloatAccId] = useState<string>("");
 
-  // Initialize Trading Engine and Double-Entry Ledger
+  // 1. Check Real Supabase Session on Mount
   useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single()
+          .then(({ data: profile }) => {
+            setCurrentUser({
+              id: user.id,
+              email: user.email || "",
+              first_name: profile?.first_name || (user.user_metadata?.first_name as string) || "Trader",
+              last_name: profile?.last_name || (user.user_metadata?.last_name as string) || "Client",
+              isDemo: false,
+            });
+            setShowAuthModal(false);
+          });
+      } else {
+        const guest = typeof window !== "undefined" && localStorage.getItem("guest_mode_enabled");
+        if (guest === "true") {
+          setCurrentUser({
+            id: "guest_demo_user",
+            email: "guest@marketmaker.demo",
+            first_name: "Demo",
+            last_name: "Trader",
+            isDemo: true,
+          });
+        } else {
+          setCurrentUser(null);
+          setShowAuthModal(true);
+        }
+      }
+    });
+  }, []);
+
+  // 2. Initialize Trading Engine and Double-Entry Ledger
+  useEffect(() => {
+    const userId = currentUser ? currentUser.id : "demo_client_1";
+    const userName = currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : "Trader";
+
     const ledger = new LedgerEngine();
     const clientAcc = ledger.createAccount(
       "client_funds",
-      `${user.first_name} ${user.last_name} Gold Trading Account`,
+      `${userName} Gold Trading Account`,
       "USD",
-      user.id
+      userId.startsWith("guest") ? undefined : userId
     );
     const floatAcc = ledger.createAccount(
       "payment_processor_float",
@@ -70,7 +124,7 @@ export default function TradePage() {
     setClientAccId(clientAcc.id);
     setFloatAccId(floatAcc.id);
 
-    // Initial $10,000 demo equity deposit recorded in ledger
+    // Initial $10,000 equity deposit recorded in ledger
     ledger
       .recordTransaction({
         description: "Initial Demo Gold Trading Equity",
@@ -102,9 +156,9 @@ export default function TradePage() {
         setEngineInstance(trading);
         setAccountSummary(trading.getAccountSummary());
       });
-  }, []);
+  }, [currentUser]);
 
-  // Subscribe to live tick stream and auto-trigger TP / SL / Limit Fills
+  // 3. Subscribe to live tick stream and auto-trigger TP / SL / Limit Fills
   useEffect(() => {
     const unsubscribe = goldMarketFeed.subscribeTicks((tick) => {
       setCurrentTick(tick);
@@ -175,6 +229,12 @@ export default function TradePage() {
     orderType: OrderType = "MARKET",
     targetPrice?: string
   ) => {
+    // ENFORCE LOGIN
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+
     if (!engineInstance) return;
     try {
       const pos = engineInstance.openPosition(
@@ -190,11 +250,11 @@ export default function TradePage() {
       setPendingOrders(engineInstance.getPendingOrders());
       setAccountSummary(engineInstance.getAccountSummary(currentTick));
 
-      // Direct live insert into Supabase Audit Logs table
+      // Direct live insert into Supabase Audit Logs table with real user_id
       try {
         const supabase = createClient();
         await supabase.from("audit_logs").insert({
-          user_id: user.id,
+          user_id: currentUser.isDemo ? null : currentUser.id,
           action: pos.status === "PENDING" ? "PLACE_LIMIT_ORDER" : "OPEN_TRADE",
           category: "trading",
           metadata: {
@@ -208,6 +268,7 @@ export default function TradePage() {
             order_type: orderType,
             take_profit: takeProfit || null,
             stop_loss: stopLoss || null,
+            user_email: currentUser.email,
           },
         });
       } catch (sbErr) {
@@ -216,11 +277,11 @@ export default function TradePage() {
 
       if (pos.status === "PENDING") {
         setExecutionNotice(
-          `📋 Pending ${direction} LIMIT Order placed for ${lots} Lots @ $${pos.targetPrice}. (✓ Saved to Supabase audit_logs)`
+          `📋 Pending ${direction} LIMIT Order placed for ${lots} Lots @ $${pos.targetPrice}. (✓ Order Queued)`
         );
       } else {
         setExecutionNotice(
-          `⚡ Executed ${direction} ${lots} Lots Gold (XAU/USD) @ $${pos.openPrice}. Margin: $${formatMoney(pos.margin)} (✓ Saved to Supabase audit_logs)`
+          `⚡ Executed ${direction} ${lots} Lots Gold (XAU/USD) @ $${pos.openPrice}. Margin: $${formatMoney(pos.margin)} (✓ Trade Settled & Recorded)`
         );
       }
       setTimeout(() => setExecutionNotice(null), 5000);
@@ -240,7 +301,7 @@ export default function TradePage() {
       try {
         const supabase = createClient();
         await supabase.from("audit_logs").insert({
-          user_id: user.id,
+          user_id: currentUser?.isDemo ? null : currentUser?.id,
           action: "CANCEL_LIMIT_ORDER",
           category: "trading",
           metadata: {
@@ -254,7 +315,7 @@ export default function TradePage() {
         console.warn("Supabase cancel sync:", sbErr);
       }
 
-      setExecutionNotice(`🚫 Cancelled Pending Limit Order ${cancelled.id} (✓ Synced to Supabase)`);
+      setExecutionNotice(`🚫 Cancelled Pending Limit Order ${cancelled.id} (✓ Order Cancelled)`);
       setTimeout(() => setExecutionNotice(null), 4000);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Error cancelling order");
@@ -273,7 +334,7 @@ export default function TradePage() {
       try {
         const supabase = createClient();
         await supabase.from("audit_logs").insert({
-          user_id: user.id,
+          user_id: currentUser?.isDemo ? null : currentUser?.id,
           action: "CLOSE_TRADE",
           category: "trading",
           metadata: {
@@ -293,7 +354,7 @@ export default function TradePage() {
       }
 
       setExecutionNotice(
-        `Closed Position ${closed.id}: Realized PnL $${formatMoney(closed.realizedPnl || "0")}. (✓ Settled in Supabase Ledger & Audit Logs)`
+        `Closed Position ${closed.id}: Realized PnL $${formatMoney(closed.realizedPnl || "0")}. (✓ Settled in Double-Entry Ledger)`
       );
       setTimeout(() => setExecutionNotice(null), 5000);
     } catch (err: unknown) {
@@ -312,7 +373,7 @@ export default function TradePage() {
     setOpenPositions(engineInstance.getOpenPositions());
     setClosedPositions(engineInstance.getClosedPositions());
     setAccountSummary(engineInstance.getAccountSummary(currentTick));
-    setExecutionNotice(`⚡ Exness Panic Action: Closed all ${count} open positions instantly. (✓ Settled to Supabase)`);
+    setExecutionNotice(`⚡ Exness Panic Action: Closed all ${count} open positions instantly. (✓ Settled to Ledger)`);
     setTimeout(() => setExecutionNotice(null), 5000);
   };
 
@@ -343,8 +404,72 @@ export default function TradePage() {
     setTimeout(() => setExecutionNotice(null), 4000);
   };
 
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    localStorage.removeItem("guest_mode_enabled");
+    setCurrentUser(null);
+    setShowAuthModal(true);
+  };
+
+  const handleEnableGuestMode = () => {
+    localStorage.setItem("guest_mode_enabled", "true");
+    setCurrentUser({
+      id: "guest_demo_user",
+      email: "guest@marketmaker.demo",
+      first_name: "Guest",
+      last_name: "Trader",
+      isDemo: true,
+    });
+    setShowAuthModal(false);
+  };
+
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-[#070a11] text-slate-100">
+    <div className="flex-1 flex flex-col min-h-screen bg-[#070a11] text-slate-100 relative">
+      {/* AUTH REQUIRED MODAL */}
+      {showAuthModal && !currentUser && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+              <Lock className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="text-xl font-black text-white">Login Required to Trade</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                To execute live trades and manage your positions, please sign in or create an account.
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <Link
+                href="/login"
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm inline-flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/10 cursor-pointer"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign In to Your Account</span>
+              </Link>
+
+              <Link
+                href="/register"
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm inline-flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/10 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Create New Account</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleEnableGuestMode}
+                className="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white font-medium text-xs border border-slate-700 transition-all cursor-pointer"
+              >
+                Continue in Guest Demo Mode ($10,000 Equity)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Trading Nav Bar */}
       <header className="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md px-3 sm:px-6 py-2.5 sm:py-3 sticky top-7 z-40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
@@ -414,12 +539,10 @@ export default function TradePage() {
 
             <div className="p-1 sm:p-1.5 rounded-lg bg-slate-900/80 border border-slate-800 px-2.5 flex items-center justify-between sm:justify-start gap-2">
               <span className="text-slate-500">Used:</span>{" "}
-              <strong className="text-amber-400 font-bold">
-                ${formatMoney(accountSummary.usedMargin)}
-              </strong>
+              <strong className="text-amber-400">${formatMoney(accountSummary.usedMargin)}</strong>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 font-sans">
               <button
                 onClick={handleDepositMore}
                 className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-white border border-slate-700 inline-flex items-center gap-1 transition-colors cursor-pointer"
@@ -443,12 +566,32 @@ export default function TradePage() {
                 <span>Ledger</span>
               </Link>
 
-              <Link
-                href="/login"
-                className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:text-white inline-flex items-center gap-1 transition-colors"
-              >
-                <span>{user ? `${user.first_name}` : "Sign In"}</span>
-              </Link>
+              {currentUser ? (
+                <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg p-1">
+                  <div className="px-2 py-0.5 text-xs font-bold text-slate-200 flex items-center gap-1">
+                    <User className="w-3 h-3 text-emerald-400" />
+                    <span>{currentUser.first_name}</span>
+                    {currentUser.isDemo && (
+                      <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded">Demo</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    title="Sign Out"
+                    className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-rose-400 transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs inline-flex items-center gap-1 transition-colors"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -484,17 +627,27 @@ export default function TradePage() {
               freeMargin={accountSummary.freeMargin}
             />
 
-            {/* Quick Demo Mode Card */}
+            {/* Account Status Card */}
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 text-xs">
               <div className="flex items-center justify-between font-bold text-slate-300">
                 <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Demo Trader Session Active</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>
+                    {currentUser
+                      ? `${currentUser.isDemo ? "Guest Demo Trader" : "Live Institutional Account"}`
+                      : "Unauthenticated Trader"}
+                  </span>
                 </span>
                 <span className="text-emerald-400 font-mono">1:100 Leverage</span>
               </div>
               <p className="text-slate-400 text-[11px] leading-relaxed">
-                Active account: <strong>{user.first_name} {user.last_name}</strong> ({user.email}). Double-entry ledger settlement verified with zero mutable balance columns.
+                {currentUser ? (
+                  <>
+                    Logged in as: <strong>{currentUser.first_name} {currentUser.last_name}</strong> ({currentUser.email}). Active Trading Session • 100% Capital Segregated.
+                  </>
+                ) : (
+                  "Please sign in or create an account to start live trading."
+                )}
               </p>
             </div>
           </div>

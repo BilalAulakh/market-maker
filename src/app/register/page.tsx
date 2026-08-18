@@ -37,7 +37,7 @@ export default function RegisterPage() {
       if (!res.success) {
         setRefusal(res);
       } else {
-        setSuccessMsg("Account registered successfully in Supabase! Signing in...");
+        setSuccessMsg("Account created successfully! Signing in...");
         // Auto sign in to establish session
         await signInAction({ email, password });
         setTimeout(() => {
@@ -86,7 +86,7 @@ export default function RegisterPage() {
 
         <div className="flex items-center gap-3 text-xs text-slate-500 uppercase font-mono">
           <div className="h-[1px] flex-1 bg-slate-800" />
-          <span>Or Create Real Supabase Account</span>
+          <span>Or Create New Account</span>
           <div className="h-[1px] flex-1 bg-slate-800" />
         </div>
 
@@ -198,11 +198,11 @@ export default function RegisterPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Registering in Supabase...</span>
+                  <span>Creating Account...</span>
                 </>
               ) : (
                 <>
-                  <span>Create Supabase Account &amp; Trade</span>
+                  <span>Create Account &amp; Start Trading</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

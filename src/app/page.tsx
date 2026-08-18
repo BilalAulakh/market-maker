@@ -72,28 +72,28 @@ export default function Home() {
         </div>
 
         {/* Main Title & Subtitle */}
-        <h1 className="text-4xl md:text-6xl font-extrabold text-center tracking-tight text-white max-w-4xl leading-tight">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center tracking-tight text-white max-w-3xl leading-snug">
           Trade Gold (XAU/USD) with Market Maker Execution
         </h1>
-        <p className="mt-4 text-base md:text-lg text-slate-400 text-center max-w-2xl leading-relaxed">
+        <p className="mt-3 text-sm md:text-base text-slate-400 text-center max-w-xl leading-relaxed">
           Institutional Gold &amp; Forex trading portal featuring real-time interactive candlestick charts, 1-click Buy/Sell execution, and strict double-entry ledger security.
         </p>
 
-        {/* Big Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
           <Link
             href="/trade"
-            className="px-8 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-base shadow-2xl shadow-amber-500/30 inline-flex items-center gap-3 transition-all hover:scale-105 cursor-pointer"
+            className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 inline-flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
           >
-            <TrendingUp className="w-5 h-5" />
+            <TrendingUp className="w-4 h-4" />
             <span>Launch Gold Trading Terminal (XAU/USD)</span>
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
             href="/ledger"
-            className="px-6 py-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-semibold text-sm inline-flex items-center gap-2 transition-all"
+            className="px-4 py-2.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-medium text-xs inline-flex items-center gap-1.5 transition-all"
           >
-            <Database className="w-4 h-4 text-emerald-400" />
+            <Database className="w-3.5 h-3.5 text-emerald-400" />
             <span>View Double-Entry Ledger</span>
           </Link>
         </div>

@@ -1,26 +1,16 @@
 {
-  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
-    "id": 5139,
+  "..\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts": {
+    "id": "..\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts",
     "files": [
-      "static/chunks/139.7a5a8e93a21948c1.js"
-    ]
-  },
-  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
-    "id": 1646,
-    "files": [
-      "static/chunks/646.f342b7cffc01feb0.js"
+      "static/chunks/_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js"
     ]
   },
   "lib\\ledger\\service.ts -> @/lib/supabase/browser": {
-    "id": 1989,
-    "files": [
-      "static/chunks/44530001-9f564ab55328eab5.js",
-      "static/chunks/370-ba4919805109dda6.js",
-      "static/chunks/989.7bcd53a74c066c6e.js"
-    ]
+    "id": "lib\\ledger\\service.ts -> @/lib/supabase/browser",
+    "files": []
   },
   "lib\\trading\\engine.ts -> @/lib/supabase/browser": {
-    "id": 1989,
+    "id": "lib\\trading\\engine.ts -> @/lib/supabase/browser",
     "files": []
   }
 }
