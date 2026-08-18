@@ -1,6 +1,6 @@
 export type TradeDirection = "BUY" | "SELL";
 
-export type PositionStatus = "OPEN" | "CLOSED";
+export type PositionStatus = "OPEN" | "CLOSED" | "PENDING" | "CANCELLED";
 
 export interface GoldTick {
   symbol: string;
@@ -25,13 +25,19 @@ export interface CandleStick {
 
 export type TimeFrame = "1M" | "5M" | "15M" | "1H" | "1D";
 
+export type OrderType = "MARKET" | "LIMIT" | "STOP";
+
 export interface Position {
   id: string;
   symbol: "XAU/USD";
   direction: TradeDirection;
+  orderType?: OrderType;
   lots: string; // Decimal string (1.0 = 100 oz)
   openPrice: string; // Decimal string
+  targetPrice?: string; // For limit orders
   currentPrice: string; // Decimal string
+  takeProfit?: string; // TP Target Price
+  stopLoss?: string; // SL Target Price
   margin: string; // Decimal string
   leverage: number; // e.g. 100
   unrealizedPnl: string; // Decimal string
@@ -40,6 +46,7 @@ export interface Position {
   closedAt?: string;
   closePrice?: string;
   realizedPnl?: string;
+  closeReason?: "MANUAL" | "TAKE_PROFIT" | "STOP_LOSS" | "LIQUIDATION";
   status: PositionStatus;
   ledgerTransactionId?: string;
 }

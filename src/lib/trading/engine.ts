@@ -3,6 +3,7 @@ import {
   GoldTick,
   Position,
   TradeDirection,
+  OrderType,
 } from "@/types/trading";
 import {
   moneyAdd,
@@ -65,9 +66,15 @@ export class TradingEngine {
   }
 
   public getOpenPositions(): Position[] {
-    return Array.from(this.positions.values()).sort(
-      (a, b) => new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime()
-    );
+    return Array.from(this.positions.values())
+      .filter((p) => p.status === "OPEN")
+      .sort((a, b) => new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime());
+  }
+
+  public getPendingOrders(): Position[] {
+    return Array.from(this.positions.values())
+      .filter((p) => p.status === "PENDING")
+      .sort((a, b) => new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime());
   }
 
   public getClosedPositions(): Position[] {
@@ -79,11 +86,16 @@ export class TradingEngine {
   public openPosition(
     direction: TradeDirection,
     lots: string,
-    leverage: number = 100
+    leverage: number = 100,
+    takeProfit?: string,
+    stopLoss?: string,
+    orderType: OrderType = "MARKET",
+    targetPrice?: string
   ): Position {
     const tick = goldMarketFeed.getCurrentTick();
-    const openPrice = direction === "BUY" ? tick.ask : tick.bid;
-    const margin = calculateRequiredMargin(lots, openPrice, leverage);
+    const isLimit = orderType === "LIMIT" && targetPrice && Number(targetPrice) > 0;
+    const executionPrice = isLimit ? targetPrice! : direction === "BUY" ? tick.ask : tick.bid;
+    const margin = calculateRequiredMargin(lots, executionPrice, leverage);
     const commission = moneyMultiply(COMMISSION_PER_LOT, lots, 2);
 
     const summary = this.getAccountSummary(tick);
@@ -98,22 +110,131 @@ export class TradingEngine {
       id,
       symbol: "XAU/USD",
       direction,
+      orderType,
       lots,
-      openPrice,
-      currentPrice: openPrice,
+      openPrice: executionPrice,
+      targetPrice: isLimit ? targetPrice : undefined,
+      currentPrice: direction === "BUY" ? tick.ask : tick.bid,
+      takeProfit: takeProfit && Number(takeProfit) > 0 ? takeProfit : undefined,
+      stopLoss: stopLoss && Number(stopLoss) > 0 ? stopLoss : undefined,
       margin,
       leverage,
       unrealizedPnl: "0.00",
       commission,
       openedAt: new Date().toISOString(),
-      status: "OPEN",
+      status: isLimit ? "PENDING" : "OPEN",
     };
 
     this.positions.set(id, position);
+
+    // Sync trade execution to Supabase audit log
+    if (typeof window !== "undefined") {
+      import("@/lib/supabase/browser")
+        .then(({ createClient }) => {
+          const supabase = createClient();
+          supabase
+            .from("audit_logs")
+            .insert({
+              action: isLimit ? "PLACE_LIMIT_ORDER" : "OPEN_TRADE",
+              category: "trading",
+              metadata: {
+                position_id: id,
+                symbol: "XAU/USD",
+                direction,
+                lots,
+                price: executionPrice,
+                margin,
+                orderType,
+                targetPrice,
+                takeProfit,
+                stopLoss,
+              },
+            })
+            .then(() => {});
+        })
+        .catch(() => {});
+    }
+
     return position;
   }
 
-  public async closePosition(positionId: string): Promise<Position> {
+  public cancelPendingOrder(orderId: string): Position {
+    const position = this.positions.get(orderId);
+    if (!position || position.status !== "PENDING") {
+      throw new Error(`Pending order ${orderId} not found or already filled.`);
+    }
+    position.status = "CANCELLED";
+    position.closedAt = new Date().toISOString();
+    this.positions.delete(orderId);
+    this.closedPositions.unshift(position);
+
+    if (typeof window !== "undefined") {
+      import("@/lib/supabase/browser")
+        .then(({ createClient }) => {
+          const supabase = createClient();
+          supabase
+            .from("audit_logs")
+            .insert({
+              action: "CANCEL_LIMIT_ORDER",
+              category: "trading",
+              metadata: {
+                order_id: orderId,
+                symbol: position.symbol,
+                direction: position.direction,
+                lots: position.lots,
+              },
+            })
+            .then(() => {});
+        })
+        .catch(() => {});
+    }
+    return position;
+  }
+
+  public checkAndFillPendingOrders(tick: GoldTick): Position[] {
+    const filled: Position[] = [];
+    for (const pos of this.positions.values()) {
+      if (pos.status === "PENDING" && pos.targetPrice) {
+        const target = Number(pos.targetPrice);
+        const ask = Number(tick.ask);
+        const bid = Number(tick.bid);
+
+        let shouldFill = false;
+        if (pos.direction === "BUY" && ask <= target) {
+          shouldFill = true;
+        } else if (pos.direction === "SELL" && bid >= target) {
+          shouldFill = true;
+        }
+
+        if (shouldFill) {
+          pos.status = "OPEN";
+          pos.openPrice = pos.targetPrice;
+          pos.currentPrice = pos.direction === "BUY" ? tick.bid : tick.ask;
+          filled.push(pos);
+        }
+      }
+    }
+    return filled;
+  }
+
+  public modifyPositionTpSl(
+    positionId: string,
+    takeProfit?: string,
+    stopLoss?: string
+  ): Position {
+    const position = this.positions.get(positionId);
+    if (!position || position.status !== "OPEN") {
+      throw new Error(`Position ${positionId} not found or closed.`);
+    }
+    position.takeProfit = takeProfit && Number(takeProfit) > 0 ? takeProfit : undefined;
+    position.stopLoss = stopLoss && Number(stopLoss) > 0 ? stopLoss : undefined;
+    return position;
+  }
+
+  public async closePosition(
+    positionId: string,
+    closeReason: "MANUAL" | "TAKE_PROFIT" | "STOP_LOSS" | "LIQUIDATION" = "MANUAL"
+  ): Promise<Position> {
     const position = this.positions.get(positionId);
     if (!position || position.status !== "OPEN") {
       throw new Error(`Position ${positionId} not found or already closed.`);
@@ -132,6 +253,7 @@ export class TradingEngine {
     position.status = "CLOSED";
     position.closePrice = closePrice;
     position.realizedPnl = finalPnl;
+    position.closeReason = closeReason;
     position.closedAt = now;
 
     // Double-entry ledger settlement for PnL and Commission (Stage 3 Integration)

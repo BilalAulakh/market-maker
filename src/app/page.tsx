@@ -37,6 +37,12 @@ export default function Home() {
               <span>Gold Terminal</span>
             </Link>
             <Link
+              href="/wallet"
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/20 border border-cyan-500/30 transition-all inline-flex items-center gap-1.5"
+            >
+              <span>Deposit / Vault</span>
+            </Link>
+            <Link
               href="/ledger"
               className="px-4 py-2 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/20 border border-emerald-500/30 transition-all inline-flex items-center gap-1.5"
             >

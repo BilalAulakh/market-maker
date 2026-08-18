@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signInAction } from "@/app/actions/auth";
 import { ClientRefusal, UserRole } from "@/types/auth";
 import { RefusalAlert } from "@/components/RefusalAlert";
+import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, Loader2, Sparkles, UserCheck } from "lucide-react";
 
 interface DemoAccount {
@@ -24,6 +25,7 @@ const DEMO_PRESETS: DemoAccount[] = [
 ];
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("trader@marketmaker.demo");
   const [password, setPassword] = useState("DemoTrader123!");
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,10 @@ export default function LoginPage() {
       if (!res.success) {
         setRefusal(res);
       } else {
-        setSuccessMsg(`Welcome back, ${res.data.profile.first_name}! Role: ${res.data.profile.role.toUpperCase()}`);
+        setSuccessMsg(`Welcome back, ${res.data.profile.first_name}! Redirecting to Trading Terminal...`);
+        setTimeout(() => {
+          router.push("/trade");
+        }, 600);
       }
     } catch {
       setRefusal({

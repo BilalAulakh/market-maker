@@ -10,5 +10,17 @@
     "files": [
       "static/chunks/646.f342b7cffc01feb0.js"
     ]
+  },
+  "lib\\ledger\\service.ts -> @/lib/supabase/browser": {
+    "id": 1989,
+    "files": [
+      "static/chunks/44530001-9f564ab55328eab5.js",
+      "static/chunks/370-ba4919805109dda6.js",
+      "static/chunks/989.7bcd53a74c066c6e.js"
+    ]
+  },
+  "lib\\trading\\engine.ts -> @/lib/supabase/browser": {
+    "id": 1989,
+    "files": []
   }
 }

@@ -168,8 +168,19 @@ export function generateAccountStatement(
   };
 }
 
+function generateUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 /**
- * In-Memory Ledger Engine implementation for fast deterministic verification and testing.
+ * In-Memory Ledger Engine implementation with live Supabase Database Cloud Sync.
  */
 export class LedgerEngine {
   private accounts = new Map<string, LedgerAccount>();
@@ -183,7 +194,7 @@ export class LedgerEngine {
     currency: string = "USD",
     userId?: string
   ): LedgerAccount {
-    const id = `acc_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
+    const id = generateUUID();
     const account: LedgerAccount = {
       id,
       user_id: userId ?? null,
@@ -193,6 +204,26 @@ export class LedgerEngine {
       created_at: new Date().toISOString(),
     };
     this.accounts.set(id, account);
+
+    // Sync account to Supabase asynchronously
+    if (typeof window !== "undefined") {
+      import("@/lib/supabase/browser")
+        .then(({ createClient }) => {
+          const supabase = createClient();
+          supabase
+            .from("ledger_accounts")
+            .upsert({
+              id: account.id,
+              user_id: account.user_id,
+              account_type: account.account_type,
+              currency: account.currency,
+              name: account.name,
+            })
+            .then(() => {});
+        })
+        .catch(() => {});
+    }
+
     return account;
   }
 
@@ -210,7 +241,7 @@ export class LedgerEngine {
   }
 
   /**
-   * Thread-safe / Mutex-guarded atomic transaction execution.
+   * Thread-safe / Mutex-guarded atomic transaction execution with live Supabase persistence.
    */
   public async recordTransaction(params: RecordTransactionParams): Promise<{
     transaction: LedgerTransaction;
@@ -250,8 +281,8 @@ export class LedgerEngine {
         throw new Error(segregationCheck.violationReason || "Fund segregation violation.");
       }
 
-      // 4. Create and persist transaction and entries
-      const txId = `tx_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
+      // 4. Create and persist transaction and entries with valid UUIDs
+      const txId = generateUUID();
       const now = new Date().toISOString();
 
       const transaction: LedgerTransaction = {
@@ -263,7 +294,7 @@ export class LedgerEngine {
       };
 
       const newEntries: LedgerEntry[] = params.entries.map((draft) => ({
-        id: `ent_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`,
+        id: generateUUID(),
         transaction_id: txId,
         account_id: draft.account_id,
         direction: draft.direction,
@@ -275,6 +306,56 @@ export class LedgerEngine {
 
       this.transactions.set(txId, transaction);
       this.entries.push(...newEntries);
+
+      // 5. Sync to Supabase Database in background
+      if (typeof window !== "undefined") {
+        import("@/lib/supabase/browser")
+          .then(async ({ createClient }) => {
+            try {
+              const supabase = createClient();
+
+              // Upsert all accounts touched by this transaction
+              for (const draft of params.entries) {
+                const acc = this.accounts.get(draft.account_id);
+                if (acc) {
+                  await supabase.from("ledger_accounts").upsert({
+                    id: acc.id,
+                    user_id: acc.user_id,
+                    account_type: acc.account_type,
+                    currency: acc.currency,
+                    name: acc.name,
+                  });
+                }
+              }
+
+              // Insert transaction record
+              await supabase.from("ledger_transactions").insert({
+                id: transaction.id,
+                description: transaction.description,
+                reference_type: transaction.reference_type,
+                reference_id: transaction.reference_id,
+                created_at: transaction.created_at,
+              });
+
+              // Insert entry records
+              await supabase.from("ledger_entries").insert(
+                newEntries.map((e) => ({
+                  id: e.id,
+                  transaction_id: e.transaction_id,
+                  account_id: e.account_id,
+                  direction: e.direction,
+                  amount: e.amount,
+                  entry_type: e.entry_type,
+                  nature: e.nature,
+                  created_at: e.created_at,
+                }))
+              );
+            } catch (syncErr) {
+              console.warn("Supabase live ledger sync notice:", syncErr);
+            }
+          })
+          .catch(() => {});
+      }
 
       return { transaction, entries: newEntries };
     } finally {
