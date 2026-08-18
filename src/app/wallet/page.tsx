@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { getActiveDemoSession } from "@/lib/auth/demo-session";
 import { LedgerEngine } from "@/lib/ledger/service";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   SupportedNetwork,
   WithdrawalRequest,
@@ -229,6 +230,7 @@ export default function WalletPage() {
               <Layers className="w-3.5 h-3.5" />
               <span>View Full Ledger</span>
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </header>

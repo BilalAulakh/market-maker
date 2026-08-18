@@ -3,12 +3,13 @@ import {
   Database,
   Lock,
   Code2,
-  Sparkles,
   CheckCircle2,
   ArrowRight,
   TrendingUp,
   Zap,
+  Sparkles,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   return (
@@ -55,6 +56,7 @@ export default function Home() {
             >
               Sign In
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </nav>

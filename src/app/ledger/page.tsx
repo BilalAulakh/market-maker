@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   CheckCircle2,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LedgerPage() {
   const user = getActiveDemoSession("client");
@@ -197,6 +198,7 @@ export default function LedgerPage() {
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Simulate Gold Trade Profit</span>
           </button>
+          <ThemeToggle />
         </div>
       </div>
 

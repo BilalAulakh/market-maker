@@ -23,6 +23,7 @@ import {
   LogIn,
   ShieldCheck,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface ActiveUser {
   id: string;
@@ -592,6 +593,8 @@ export default function TradePage() {
                   <span>Sign In</span>
                 </Link>
               )}
+
+              <ThemeToggle />
             </div>
           </div>
         </div>
