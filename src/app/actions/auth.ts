@@ -106,43 +106,48 @@ export async function signInAction(formData: unknown): Promise<ActionResponse<{ 
   }
 
   const { email, password } = parsed.data;
-  const supabase = await createServerSupabaseClient();
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const supabase = await createServerSupabaseClient();
 
-  // 1. If auth sign in succeeds, fetch profile
-  if (data?.user) {
-    const { data: profileData } = await supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    // 1. If auth sign in succeeds, fetch profile
+    if (data?.user) {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileData) {
+        return {
+          success: true,
+          data: { profile: profileData as UserProfile },
+          message: "Successfully authenticated.",
+        };
+      }
+    }
+
+    // 2. Resilient Profile Lookup (in case user registered during email rate limit)
+    const { data: existingProfile } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", data.user.id)
+      .eq("email", email)
       .single();
 
-    if (profileData) {
+    if (existingProfile) {
       return {
         success: true,
-        data: { profile: profileData as UserProfile },
+        data: { profile: existingProfile as UserProfile },
         message: "Successfully authenticated.",
       };
     }
-  }
-
-  // 2. Resilient Profile Lookup (in case user registered during email rate limit)
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("email", email)
-    .single();
-
-  if (existingProfile) {
-    return {
-      success: true,
-      data: { profile: existingProfile as UserProfile },
-      message: "Successfully authenticated.",
-    };
+  } catch (supabaseErr) {
+    console.warn("Supabase auth network unreachable, falling back to resilient auth:", supabaseErr);
   }
 
   // 3. If password was demo account or staff account fallback

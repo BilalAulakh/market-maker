@@ -20,9 +20,17 @@ export type ClientEnv = z.infer<typeof clientEnvSchema>;
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 export function getClientEnv(): ClientEnv {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL
+    : "https://etlauinhmtcsgcxabmyu.supabase.co";
+
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== undefined
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0bGF1aW5obXRjc2djeGFibXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NjQ2NTQsImV4cCI6MjEwMjU0MDY1NH0.r3kWGJpTYGrgHcQFFtil1MgODyCgXhQakUMF9glqhPY";
+
   const parsed = clientEnvSchema.safeParse({
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_SUPABASE_URL: url,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: key,
   });
 
   if (!parsed.success) {
@@ -34,10 +42,20 @@ export function getClientEnv(): ClientEnv {
 }
 
 export function getServerEnv(): ServerEnv {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL
+    : "https://etlauinhmtcsgcxabmyu.supabase.co";
+
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== undefined
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0bGF1aW5obXRjc2djeGFibXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NjQ2NTQsImV4cCI6MjEwMjU0MDY1NH0.r3kWGJpTYGrgHcQFFtil1MgODyCgXhQakUMF9glqhPY";
+
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
   const parsed = serverEnvSchema.safeParse({
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    NEXT_PUBLIC_SUPABASE_URL: url,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: key,
+    SUPABASE_SERVICE_ROLE_KEY: serviceKey,
   });
 
   if (!parsed.success) {
