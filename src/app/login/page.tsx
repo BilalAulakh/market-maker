@@ -12,22 +12,23 @@ interface DemoAccount {
   label: string;
   role: UserRole;
   email: string;
+  password: string;
   desc: string;
 }
 
 const DEMO_PRESETS: DemoAccount[] = [
-  { label: "Retail Client (Gold Trader)", role: "client", email: "trader@marketmaker.demo", desc: "Trade XAU/USD, deposit, request withdrawals" },
-  { label: "Compliance Officer", role: "compliance", email: "compliance@marketmaker.demo", desc: "Review KYC, audit holds & AML" },
-  { label: "Operations Staff", role: "operations", email: "ops@marketmaker.demo", desc: "Manage client lifecycle & holds" },
-  { label: "Finance / Ledger Admin", role: "finance", email: "finance@marketmaker.demo", desc: "Approve deposits, monitor ledger" },
-  { label: "Dealing Desk (Chief Dealer)", role: "dealer", email: "dealer@marketmaker.demo", desc: "Market rates, spreads & execution" },
-  { label: "System Administrator", role: "admin", email: "admin@marketmaker.demo", desc: "Full platform governance" },
+  { label: "Retail Client (Gold Trader)", role: "client", email: "trader@marketmaker.com", password: "GoldTrader2026!#", desc: "Trade XAU/USD, deposit, request withdrawals" },
+  { label: "Compliance Officer", role: "compliance", email: "compliance@marketmaker.com", password: "KycCompliance2026!#", desc: "Review KYC, audit holds & AML" },
+  { label: "Operations Staff", role: "operations", email: "ops@marketmaker.com", password: "OpsManager2026!#", desc: "Manage client lifecycle & holds" },
+  { label: "Finance / Ledger Admin", role: "finance", email: "finance@marketmaker.com", password: "LedgerFinance2026!#", desc: "Approve deposits, monitor ledger" },
+  { label: "Dealing Desk (Chief Dealer)", role: "dealer", email: "dealer@marketmaker.com", password: "ChiefDealer2026!#", desc: "Market rates, spreads & execution" },
+  { label: "System Administrator", role: "admin", email: "admin@marketmaker.com", password: "SuperAdmin2026!#", desc: "Full platform governance" },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("trader@marketmaker.demo");
-  const [password, setPassword] = useState("DemoTrader123!");
+  const [email, setEmail] = useState("trader@marketmaker.com");
+  const [password, setPassword] = useState("GoldTrader2026!#");
   const [loading, setLoading] = useState(false);
   const [refusal, setRefusal] = useState<ClientRefusal | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -43,9 +44,18 @@ export default function LoginPage() {
       if (!res.success) {
         setRefusal(res);
       } else {
-        setSuccessMsg(`Welcome back, ${res.data.profile.first_name}! Redirecting to Trading Terminal...`);
+        const profile = res.data.profile;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("active_user_session", JSON.stringify(profile));
+          localStorage.setItem("guest_mode_enabled", "true");
+        }
+
+        const targetUrl = profile.role === "admin" ? "/admin" : "/trade";
+        const roleLabel = profile.role === "admin" ? "Super Admin Portal" : "Trading Terminal";
+
+        setSuccessMsg(`Welcome back, ${profile.first_name}! Redirecting to ${roleLabel}...`);
         setTimeout(() => {
-          router.push("/trade");
+          router.push(targetUrl);
         }, 600);
       }
     } catch {
@@ -67,7 +77,7 @@ export default function LoginPage() {
 
   const selectPreset = (preset: DemoAccount) => {
     setEmail(preset.email);
-    setPassword("DemoTrader123!");
+    setPassword(preset.password);
     setRefusal(null);
   };
 
@@ -76,14 +86,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header Branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3 h-3" />
             <span>Market Maker Demo Portal</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Market Maker Sign In
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Sign in to access Gold (XAU/USD) trading, ledger records, or dealing desk.
           </p>
         </div>
@@ -93,17 +103,17 @@ export default function LoginPage() {
 
         {/* Success Alert */}
         {successMsg && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-emerald-300 text-sm flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+          <div className="rounded-xl border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/20 p-4 text-emerald-900 dark:text-emerald-300 text-sm flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* Login Form Card */}
-        <div className="bg-slate-900/70 border border-slate-800 p-6 md:p-8 rounded-2xl shadow-xl backdrop-blur-md">
+        <div className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-6 md:p-8 rounded-2xl shadow-xl backdrop-blur-md">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Email Address
               </label>
               <div className="relative">
@@ -114,13 +124,13 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -131,7 +141,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                 />
               </div>
             </div>
@@ -155,11 +165,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-slate-800 text-center text-xs text-slate-400">
+          <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-600 dark:text-slate-400">
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
+              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold transition-colors"
             >
               Create Client Account
             </Link>
@@ -167,10 +177,10 @@ export default function LoginPage() {
         </div>
 
         {/* Demo Role Switcher Presets */}
-        <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+        <div className="p-4 rounded-xl bg-slate-100/80 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
             <span>Quick Demo Role Presets:</span>
-            <span className="text-[10px] text-slate-400">Click to fill</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">Click to fill</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {DEMO_PRESETS.map((p) => (
@@ -178,12 +188,12 @@ export default function LoginPage() {
                 key={p.role}
                 type="button"
                 onClick={() => selectPreset(p)}
-                className="text-left p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 transition-all text-xs group"
+                className="text-left p-2 rounded-lg bg-white dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800/90 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all text-xs group cursor-pointer"
               >
-                <div className="font-semibold text-slate-200 group-hover:text-emerald-400 transition-colors">
+                <div className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   {p.label}
                 </div>
-                <div className="text-[10px] text-slate-400 truncate">{p.desc}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{p.desc}</div>
               </button>
             ))}
           </div>

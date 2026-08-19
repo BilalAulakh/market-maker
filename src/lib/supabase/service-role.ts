@@ -16,3 +16,6 @@ export function createServiceRoleClient() {
     },
   });
 }
+
+export const getServiceRoleClient = createServiceRoleClient;
+

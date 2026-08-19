@@ -362,4 +362,36 @@ export class LedgerEngine {
       releaseLock!();
     }
   }
+
+  /**
+   * Deletes a transaction and its balanced entries atomically (For demo management / rollback).
+   * Ensures both debit and credit entries are removed together so ledger remains balanced.
+   */
+  public async deleteTransaction(transactionId: string): Promise<boolean> {
+    this.transactions.delete(transactionId);
+    this.entries = this.entries.filter((e) => e.transaction_id !== transactionId);
+
+    if (typeof window !== "undefined") {
+      import("@/lib/supabase/browser")
+        .then(async ({ createClient }) => {
+          try {
+            const supabase = createClient();
+            await supabase.from("ledger_entries").delete().eq("transaction_id", transactionId);
+            await supabase.from("ledger_transactions").delete().eq("id", transactionId);
+          } catch (err) {
+            console.warn("Supabase delete transaction sync:", err);
+          }
+        })
+        .catch(() => {});
+    }
+    return true;
+  }
+
+  /**
+   * Resets ledger entries for an account or clears all demo entries.
+   */
+  public clearAllEntries(): void {
+    this.transactions.clear();
+    this.entries = [];
+  }
 }

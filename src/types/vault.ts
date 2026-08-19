@@ -9,11 +9,31 @@ export interface CryptoDepositAddress {
   minimumDeposit: string;
 }
 
-export type WithdrawalStatus = "pending" | "processing" | "completed" | "rejected";
+export type DepositStatus = "pending" | "approved" | "rejected";
+export type WithdrawalStatus = "pending" | "approved" | "rejected" | "processing" | "completed";
+
+export interface DepositRecord {
+  id: string;
+  user_id: string;
+  account_id?: string;
+  network: SupportedNetwork;
+  token: string;
+  amount: string;
+  currency: string;
+  deposit_address: string;
+  tx_hash?: string | null;
+  status: DepositStatus;
+  admin_notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface WithdrawalRequest {
   id: string;
   user_id: string;
+  account_id?: string;
   network: SupportedNetwork;
   token: "USDT";
   destination_address: string;
@@ -21,8 +41,12 @@ export interface WithdrawalRequest {
   fee: string; // Network fee in USDT
   net_amount: string;
   status: WithdrawalStatus;
-  tx_hash?: string;
+  tx_hash?: string | null;
+  admin_notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface DepositEvent {
@@ -35,5 +59,13 @@ export interface DepositEvent {
   from_address: string;
   to_address: string;
   created_at: string;
-  status: "confirmed";
+  status: "confirmed" | "pending" | "approved" | "rejected";
+}
+
+export interface CashierReviewAction {
+  id: string;
+  type: "deposit" | "withdrawal";
+  status: "approved" | "rejected";
+  adminNotes?: string;
+  txHash?: string;
 }

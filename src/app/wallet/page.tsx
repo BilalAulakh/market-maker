@@ -136,6 +136,22 @@ export default function WalletPage() {
         network
       );
 
+      // Also persist to Supabase via backend API
+      try {
+        await fetch("/api/wallet/deposit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            network,
+            amount: amountToProcess,
+            txHash: `tx_${Date.now()}`,
+          }),
+        });
+      } catch (apiErr) {
+        console.warn("Backend deposit API sync:", apiErr);
+      }
+
       setBalance(result.newBalance);
       setDeposits((prev) => [result.depositEvent, ...prev]);
       setSuccessMessage(
@@ -173,6 +189,22 @@ export default function WalletPage() {
         network
       );
 
+      // Also persist to Supabase via backend API
+      try {
+        await fetch("/api/wallet/withdraw", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            network,
+            destinationAddress: withdrawAddress,
+            amount: withdrawAmount,
+          }),
+        });
+      } catch (apiErr) {
+        console.warn("Backend withdrawal API sync:", apiErr);
+      }
+
       setBalance(result.newBalance);
       setWithdrawals((prev) => [result.withdrawalRequest, ...prev]);
       setSuccessMessage(
@@ -189,46 +221,47 @@ export default function WalletPage() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#070a11] text-slate-100 pb-16">
       {/* Top Navigation */}
-      <header className="w-full border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md px-6 py-4 sticky top-6 z-40">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="w-full border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md px-3 sm:px-6 py-3 sticky top-6 z-40">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/"
-              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all inline-flex items-center gap-1.5 text-xs font-semibold"
+              className="p-1.5 sm:p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all inline-flex items-center gap-1 text-xs font-semibold"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Back</span>
             </Link>
             <div className="h-4 w-px bg-slate-800" />
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center font-black text-slate-950 text-xs shadow-lg shadow-emerald-500/20">
-                <Wallet className="w-4 h-4 text-slate-950" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center font-black text-slate-950 text-xs shadow-lg shadow-emerald-500/20 shrink-0">
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950" />
               </div>
               <div>
-                <h1 className="font-extrabold text-base tracking-tight text-white flex items-center gap-2">
-                  <span>Crypto Custody &amp; Vault</span>
-                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold">
-                    Live Segregation
+                <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-white flex items-center gap-1.5">
+                  <span>Crypto Custody</span>
+                  <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold hidden xs:inline">
+                    Segregated
                   </span>
                 </h1>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/trade"
-              className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-md shadow-amber-500/10 inline-flex items-center gap-1.5"
+              className="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-md shadow-amber-500/10 inline-flex items-center gap-1"
             >
               <Zap className="w-3.5 h-3.5 fill-slate-950" />
-              <span>Trade Terminal</span>
+              <span className="hidden xs:inline">Trade Terminal</span>
+              <span className="xs:hidden">Trade</span>
             </Link>
             <Link
               href="/ledger"
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/20 border border-emerald-500/30 transition-all inline-flex items-center gap-1.5"
+              className="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/20 border border-emerald-500/30 transition-all inline-flex items-center gap-1"
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>View Full Ledger</span>
+              <span className="hidden xs:inline">Ledger</span>
             </Link>
             <ThemeToggle />
           </div>

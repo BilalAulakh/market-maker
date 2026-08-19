@@ -2,7 +2,7 @@ import { UserProfile, UserRole } from "@/types/auth";
 
 export const DEMO_TRADER_PROFILE: UserProfile = {
   id: "demo_trader_usr_001",
-  email: "trader@marketmaker.demo",
+  email: "trader@marketmaker.com",
   first_name: "Alexander",
   last_name: "Wright",
   phone: "+44 7911 123456",
@@ -17,7 +17,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
   client: DEMO_TRADER_PROFILE,
   compliance: {
     id: "demo_compliance_usr_002",
-    email: "compliance@marketmaker.demo",
+    email: "compliance@marketmaker.com",
     first_name: "Eleanor",
     last_name: "Vance",
     phone: "+44 7911 998877",
@@ -29,7 +29,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
   },
   operations: {
     id: "demo_ops_usr_003",
-    email: "ops@marketmaker.demo",
+    email: "ops@marketmaker.com",
     first_name: "Marcus",
     last_name: "Brody",
     phone: "+44 7911 445566",
@@ -41,7 +41,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
   },
   finance: {
     id: "demo_finance_usr_004",
-    email: "finance@marketmaker.demo",
+    email: "finance@marketmaker.com",
     first_name: "Sarah",
     last_name: "Jenkins",
     phone: "+44 7911 778899",
@@ -53,7 +53,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
   },
   dealer: {
     id: "demo_dealer_usr_005",
-    email: "dealer@marketmaker.demo",
+    email: "dealer@marketmaker.com",
     first_name: "David",
     last_name: "Sterling",
     phone: "+44 7911 112233",
@@ -65,7 +65,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
   },
   admin: {
     id: "demo_admin_usr_006",
-    email: "admin@marketmaker.demo",
+    email: "admin@marketmaker.com",
     first_name: "Chief",
     last_name: "Executive",
     phone: "+44 7911 000000",

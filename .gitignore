@@ -26,3 +26,9 @@
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Database Backups & Dumps (Keep Local Only)
+/backups/
+*.sql
+*.dump
+market_maker_full_backup.sql

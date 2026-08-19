@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { signUpAction, signInAction } from "@/app/actions/auth";
 import { ClientRefusal } from "@/types/auth";
 import { RefusalAlert } from "@/components/RefusalAlert";
-import { Lock, Mail, User, ArrowRight, Loader2, Sparkles, Zap, CheckCircle2 } from "lucide-react";
+import { Lock, Mail, User, ArrowRight, Loader2, Sparkles, Zap, CheckCircle2, Info } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("Alexander");
   const [lastName, setLastName] = useState("Wright");
-  const [email, setEmail] = useState("trader@marketmaker.demo");
+  const [email, setEmail] = useState("trader@marketmaker.com");
   const [password, setPassword] = useState("DemoTrader123!");
   const [country, setCountry] = useState("United Kingdom");
   const [loading, setLoading] = useState(false);
@@ -38,14 +38,23 @@ export default function RegisterPage() {
         setRefusal(res);
       } else {
         setSuccessMsg("Account created successfully! Signing in...");
+        
         // Auto sign in to establish session
-        await signInAction({ email, password });
+        const authRes = await signInAction({ email, password });
+        if (authRes.success && typeof window !== "undefined") {
+          localStorage.setItem("active_user_session", JSON.stringify(authRes.data.profile));
+          localStorage.setItem("guest_mode_enabled", "true");
+        }
+
         setTimeout(() => {
           router.push("/trade");
         }, 800);
       }
     } catch {
       // Direct demo fallback
+      if (typeof window !== "undefined") {
+        localStorage.setItem("guest_mode_enabled", "true");
+      }
       router.push("/trade");
     } finally {
       setLoading(false);
@@ -53,6 +62,9 @@ export default function RegisterPage() {
   };
 
   const handleInstantDemo = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("guest_mode_enabled", "true");
+    }
     router.push("/trade");
   };
 
@@ -61,14 +73,14 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header Branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3 h-3" />
             <span>Instant Registration &amp; Onboarding</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Open Gold Trading Account
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Create an account to start trading Gold (XAU/USD) with double-entry ledger protection.
           </p>
         </div>
@@ -85,9 +97,9 @@ export default function RegisterPage() {
         </button>
 
         <div className="flex items-center gap-3 text-xs text-slate-500 uppercase font-mono">
-          <div className="h-[1px] flex-1 bg-slate-800" />
+          <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800" />
           <span>Or Create New Account</span>
-          <div className="h-[1px] flex-1 bg-slate-800" />
+          <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800" />
         </div>
 
         {/* Refusal / Error Display */}
@@ -95,18 +107,18 @@ export default function RegisterPage() {
 
         {/* Success Alert */}
         {successMsg && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-emerald-300 text-sm flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <div className="rounded-xl border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/20 p-4 text-emerald-900 dark:text-emerald-300 text-sm flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* Registration Form Card */}
-        <div className="bg-slate-900/70 border border-slate-800 p-6 md:p-8 rounded-2xl shadow-xl backdrop-blur-md">
+        <div className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-6 md:p-8 rounded-2xl shadow-xl backdrop-blur-md">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   First Name
                 </label>
                 <div className="relative">
@@ -117,13 +129,13 @@ export default function RegisterPage() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="Alexander"
-                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+                    className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-700/80 rounded-lg pl-10 pr-3 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Last Name
                 </label>
                 <input
@@ -132,13 +144,13 @@ export default function RegisterPage() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Wright"
-                  className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Email Address
               </label>
               <div className="relative">
@@ -148,20 +160,20 @@ export default function RegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="trader@marketmaker.demo"
-                  className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+                  placeholder="trader@marketmaker.com"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Country of Residence
               </label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+                className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-700/80 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
               >
                 <option value="United Kingdom">United Kingdom</option>
                 <option value="United Arab Emirates">United Arab Emirates</option>
@@ -174,7 +186,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -184,10 +196,14 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full bg-slate-950/60 border border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+                  placeholder="DemoTrader123!"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-700/80 rounded-lg pl-10 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
                 />
               </div>
+              <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                <Info className="w-3 h-3 text-slate-400" />
+                <span>Must be min. 8 characters with 1 uppercase letter and 1 number (e.g. <code>DemoTrader123!</code>)</span>
+              </p>
             </div>
 
             <button
@@ -209,11 +225,11 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-slate-800 text-center text-xs text-slate-400">
+          <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-600 dark:text-slate-400">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+              className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-bold transition-colors"
             >
               Sign In
             </Link>
