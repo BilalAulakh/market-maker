@@ -477,15 +477,22 @@ export default function TradePage() {
     setTimeout(() => setExecutionNotice(null), 4000);
   };
 
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+  const handleSignOut = () => {
+    // Clear localStorage immediately — instant effect on all environments
     if (typeof window !== "undefined") {
       localStorage.removeItem("guest_mode_enabled");
       localStorage.removeItem("active_user_session");
     }
     setCurrentUser(null);
-    setShowAuthModal(true);
+    // Best-effort Supabase signOut (fire-and-forget, don't await)
+    try {
+      const supabase = createClient();
+      supabase.auth.signOut().catch(() => {});
+    } catch {
+      // ignore
+    }
+    // Hard redirect to login page — guaranteed to work on all environments
+    window.location.href = "/login";
   };
 
   const handleEnableGuestMode = () => {

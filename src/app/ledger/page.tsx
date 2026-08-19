@@ -64,25 +64,51 @@ export default function LedgerPage() {
 
   // 1. Fetch live Supabase User session or fallback to guest demo
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single()
-          .then(({ data: profile }) => {
-            setCurrentUser({
-              id: user.id,
-              email: user.email || "",
-              first_name: profile?.first_name || (user.user_metadata?.first_name as string) || "Trader",
-              last_name: profile?.last_name || (user.user_metadata?.last_name as string) || "Client",
-              isDemo: false,
-            });
+    // Check localStorage first
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("active_user_session");
+      if (saved) {
+        try {
+          const profile = JSON.parse(saved);
+          setCurrentUser({
+            id: profile.id || "demo_client_1",
+            email: profile.email || "trader@marketmaker.com",
+            first_name: profile.first_name || "Alexander",
+            last_name: profile.last_name || "Wright",
+            isDemo: false,
           });
+          return;
+        } catch { /* ignore */ }
       }
-    });
+    }
+
+    try {
+      const supabase = createClient();
+      supabase.auth.getUser()
+        .then(({ data }) => {
+          const user = data?.user;
+          if (user) {
+            supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", user.id)
+              .single()
+              .then(
+                ({ data: profile }) => {
+                  setCurrentUser({
+                    id: user.id,
+                    email: user.email || "",
+                    first_name: profile?.first_name || (user.user_metadata?.first_name as string) || "Trader",
+                    last_name: profile?.last_name || (user.user_metadata?.last_name as string) || "Client",
+                    isDemo: false,
+                  });
+                },
+                () => { /* keep default */ }
+              );
+          }
+        })
+        .catch(() => { /* keep default */ });
+    } catch { /* keep default */ }
   }, []);
 
   // 2. Initialize accounts in Ledger Engine
