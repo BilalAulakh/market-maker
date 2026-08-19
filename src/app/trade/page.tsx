@@ -82,41 +82,79 @@ export default function TradePage() {
       }
     }
 
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single()
-          .then(({ data: profile }) => {
-            setCurrentUser({
-              id: user.id,
-              email: user.email || "",
-              first_name: profile?.first_name || (user.user_metadata?.first_name as string) || "Trader",
-              last_name: profile?.last_name || (user.user_metadata?.last_name as string) || "Client",
-              isDemo: false,
-            });
-            setShowAuthModal(false);
-          });
-      } else {
-        const guest = typeof window !== "undefined" && localStorage.getItem("guest_mode_enabled");
-        if (guest === "true") {
+    try {
+      const supabase = createClient();
+      supabase.auth.getUser()
+        .then(({ data: { user } = { user: null } }) => {
+          if (user) {
+            supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", user.id)
+              .single()
+              .then(({ data: profile }) => {
+                setCurrentUser({
+                  id: user.id,
+                  email: user.email || "",
+                  first_name: profile?.first_name || (user.user_metadata?.first_name as string) || "Trader",
+                  last_name: profile?.last_name || (user.user_metadata?.last_name as string) || "Client",
+                  isDemo: false,
+                });
+                setShowAuthModal(false);
+              })
+              .catch(() => {
+                setCurrentUser({
+                  id: user.id,
+                  email: user.email || "",
+                  first_name: (user.user_metadata?.first_name as string) || "Trader",
+                  last_name: (user.user_metadata?.last_name as string) || "Client",
+                  isDemo: false,
+                });
+                setShowAuthModal(false);
+              });
+          } else {
+            const guest = typeof window !== "undefined" && localStorage.getItem("guest_mode_enabled");
+            if (guest === "true") {
+              setCurrentUser({
+                id: "guest_demo_user",
+                email: "guest@marketmaker.com",
+                first_name: "Demo",
+                last_name: "Trader",
+                isDemo: true,
+              });
+              setShowAuthModal(false);
+            } else {
+              setCurrentUser({
+                id: "guest_demo_user",
+                email: "trader@marketmaker.com",
+                first_name: "Gold",
+                last_name: "Trader",
+                isDemo: true,
+              });
+              setShowAuthModal(false);
+            }
+          }
+        })
+        .catch(() => {
           setCurrentUser({
             id: "guest_demo_user",
-            email: "guest@marketmaker.com",
-            first_name: "Demo",
+            email: "trader@marketmaker.com",
+            first_name: "Gold",
             last_name: "Trader",
             isDemo: true,
           });
           setShowAuthModal(false);
-        } else {
-          setCurrentUser(null);
-          setShowAuthModal(true);
-        }
-      }
-    });
+        });
+    } catch {
+      setCurrentUser({
+        id: "guest_demo_user",
+        email: "trader@marketmaker.com",
+        first_name: "Gold",
+        last_name: "Trader",
+        isDemo: true,
+      });
+      setShowAuthModal(false);
+    }
   }, []);
 
   // 2. Initialize Trading Engine and Double-Entry Ledger
