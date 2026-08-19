@@ -191,18 +191,20 @@ export default function AdminPage() {
       supabase
         .from("profiles")
         .select("*")
-        .then(({ data: profileList }) => {
-          if (profileList && profileList.length > 0) {
-            setUsers((prev) => {
-              const map = new Map(prev.map((u) => [u.id, u]));
-              for (const p of profileList) {
-                map.set(p.id, p);
-              }
-              return Array.from(map.values());
-            });
-          }
-        })
-        .catch(() => {});
+        .then(
+          ({ data: profileList }) => {
+            if (profileList && profileList.length > 0) {
+              setUsers((prev) => {
+                const map = new Map(prev.map((u) => [u.id, u]));
+                for (const p of profileList) {
+                  map.set(p.id, p);
+                }
+                return Array.from(map.values());
+              });
+            }
+          },
+          () => {}
+        );
 
       // Fetch real audit logs
       supabase
@@ -210,16 +212,18 @@ export default function AdminPage() {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50)
-        .then(({ data: logs }) => {
-          if (logs && logs.length > 0) {
-            setAuditLogs((prev) => {
-              const existingIds = new Set(prev.map((l) => l.id));
-              const newLogs = logs.filter((l: any) => !existingIds.has(l.id));
-              return [...newLogs, ...prev];
-            });
-          }
-        })
-        .catch(() => {});
+        .then(
+          ({ data: logs }) => {
+            if (logs && logs.length > 0) {
+              setAuditLogs((prev) => {
+                const existingIds = new Set(prev.map((l) => l.id));
+                const newLogs = logs.filter((l: any) => !existingIds.has(l.id));
+                return [...newLogs, ...prev];
+              });
+            }
+          },
+          () => {}
+        );
 
       // Fetch all positions & orders
       supabase
@@ -227,20 +231,20 @@ export default function AdminPage() {
         .select("*")
         .order("opened_at", { ascending: false })
         .limit(50)
-        .then(({ data }) => {
-          if (data) setAllPositions(data as any);
-        })
-        .catch(() => {});
+        .then(
+          ({ data }) => { if (data) setAllPositions(data as any); },
+          () => {}
+        );
 
       supabase
         .from("orders")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50)
-        .then(({ data }) => {
-          if (data) setAllOrders(data as any);
-        })
-        .catch(() => {});
+        .then(
+          ({ data }) => { if (data) setAllOrders(data as any); },
+          () => {}
+        );
     } catch {
       // Supabase unreachable — use demo data already in state
     }
