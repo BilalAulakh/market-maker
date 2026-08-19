@@ -92,26 +92,28 @@ export default function TradePage() {
               .select("*")
               .eq("id", user.id)
               .single()
-              .then(({ data: profile }) => {
-                setCurrentUser({
-                  id: user.id,
-                  email: user.email || "",
-                  first_name: profile?.first_name || (user.user_metadata?.first_name as string) || "Trader",
-                  last_name: profile?.last_name || (user.user_metadata?.last_name as string) || "Client",
-                  isDemo: false,
-                });
-                setShowAuthModal(false);
-              })
-              .catch(() => {
-                setCurrentUser({
-                  id: user.id,
-                  email: user.email || "",
-                  first_name: (user.user_metadata?.first_name as string) || "Trader",
-                  last_name: (user.user_metadata?.last_name as string) || "Client",
-                  isDemo: false,
-                });
-                setShowAuthModal(false);
-              });
+              .then(
+                ({ data: profile }) => {
+                  setCurrentUser({
+                    id: user.id,
+                    email: user.email || "",
+                    first_name: profile?.first_name || (user.user_metadata?.first_name as string) || "Trader",
+                    last_name: profile?.last_name || (user.user_metadata?.last_name as string) || "Client",
+                    isDemo: false,
+                  });
+                  setShowAuthModal(false);
+                },
+                () => {
+                  setCurrentUser({
+                    id: user.id,
+                    email: user.email || "",
+                    first_name: (user.user_metadata?.first_name as string) || "Trader",
+                    last_name: (user.user_metadata?.last_name as string) || "Client",
+                    isDemo: false,
+                  });
+                  setShowAuthModal(false);
+                }
+              );
           } else {
             const guest = typeof window !== "undefined" && localStorage.getItem("guest_mode_enabled");
             if (guest === "true") {

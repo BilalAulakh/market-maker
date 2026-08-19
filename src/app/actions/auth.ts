@@ -110,7 +110,7 @@ export async function signInAction(formData: unknown): Promise<ActionResponse<{ 
   try {
     const supabase = await createServerSupabaseClient();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -185,7 +185,7 @@ export async function signInAction(formData: unknown): Promise<ActionResponse<{ 
   return createClientRefusal({
     code: "AUTHENTICATION_FAILED",
     whatHappened: "Authentication failed. Unable to access account.",
-    why: error?.message || "Invalid email or password combination.",
+    why: "Invalid email or password combination.",
     howToResolve: "Please verify your email address and password, or create a new account.",
     whereToGo: {
       label: "Create New Account",

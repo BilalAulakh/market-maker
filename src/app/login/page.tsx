@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { signInAction } from "@/app/actions/auth";
-import { ClientRefusal, UserRole } from "@/types/auth";
+import { ClientRefusal, UserProfile, UserRole } from "@/types/auth";
 import { RefusalAlert } from "@/components/RefusalAlert";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, Loader2, Sparkles, UserCheck } from "lucide-react";
