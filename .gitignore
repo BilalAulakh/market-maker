@@ -32,3 +32,10 @@ next-env.d.ts
 *.sql
 *.dump
 market_maker_full_backup.sql
+
+# Secret Credentials & Keys (Keep Local Only)
+MARKET_MAKER_CREDENTIALS.txt
+*CREDENTIALS*
+.env
+.env.local
+.env*.local

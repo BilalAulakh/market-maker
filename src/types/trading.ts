@@ -43,7 +43,7 @@ export interface CandleStick {
   volume: number;
 }
 
-export type TimeFrame = "1M" | "5M" | "15M" | "1H" | "1D";
+export type TimeFrame = "1M" | "5M" | "15M" | "30M" | "1H" | "4H" | "1D";
 
 export interface InstrumentConfig {
   symbol: string;

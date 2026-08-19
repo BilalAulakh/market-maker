@@ -7,7 +7,6 @@ import {
 import { MarketDataService } from "@/lib/trading/market-data";
 import { LedgerEngine, generateAccountStatement } from "@/lib/ledger/service";
 import { LedgerAccount } from "@/types/ledger";
-import { moneyAdd, moneySubtract, moneyMultiply, moneyDivide } from "@/lib/money";
 
 describe("Exhaustive Buy & Sell Verification Suite", () => {
   let ledger: LedgerEngine;

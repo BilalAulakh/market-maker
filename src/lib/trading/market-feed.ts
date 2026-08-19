@@ -113,16 +113,16 @@ class GoldMarketFeed {
   }
 
   private initHistory() {
-    const timeframes: TimeFrame[] = ["1M", "5M", "15M", "1H", "1D"];
+    const timeframes: TimeFrame[] = ["1M", "5M", "15M", "30M", "1H", "4H", "1D"];
     const now = Date.now();
     const config = ASSET_CONFIGS[this.currentSymbol];
 
     for (const tf of timeframes) {
       const intervalMs = this.getIntervalMs(tf);
-      const stepVolatility = config.volatility * (tf === "1D" ? 4.0 : tf === "1H" ? 2.0 : tf === "15M" ? 1.2 : 0.6);
+      const stepVolatility = config.volatility * (tf === "1D" ? 4.0 : tf === "4H" ? 3.0 : tf === "1H" ? 2.0 : tf === "30M" ? 1.5 : tf === "15M" ? 1.2 : 0.6);
       
       let price = this.currentMid;
-      const count = 75;
+      const count = 500; // Deep 500-candle historical depth
 
       const tempBars: CandleStick[] = [];
       for (let i = 0; i < count; i++) {
@@ -155,7 +155,9 @@ class GoldMarketFeed {
       case "1M": return "1m";
       case "5M": return "5m";
       case "15M": return "15m";
+      case "30M": return "30m";
       case "1H": return "1h";
+      case "4H": return "4h";
       case "1D": return "1d";
     }
   }
@@ -165,7 +167,9 @@ class GoldMarketFeed {
       case "1M": return 60 * 1000;
       case "5M": return 5 * 60 * 1000;
       case "15M": return 15 * 60 * 1000;
+      case "30M": return 30 * 60 * 1000;
       case "1H": return 60 * 60 * 1000;
+      case "4H": return 4 * 60 * 60 * 1000;
       case "1D": return 24 * 60 * 60 * 1000;
     }
   }
@@ -181,7 +185,7 @@ class GoldMarketFeed {
     try {
       const interval = this.mapTimeframeToBinance(tf);
       const res = await fetch(
-        `https://api.binance.com/api/v3/klines?symbol=${config.binanceSymbol}&interval=${interval}&limit=100`
+        `https://api.binance.com/api/v3/klines?symbol=${config.binanceSymbol}&interval=${interval}&limit=500`
       );
       if (!res.ok) throw new Error(`Binance API error: ${res.statusText}`);
       

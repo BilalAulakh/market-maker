@@ -103,7 +103,7 @@ export function GoldChart({ currentTick, openPositions = [], pendingOrders = [] 
           next[next.length - 1] = { ...updated };
           return next;
         } else {
-          return [...prev.slice(-149), updated];
+          return [...prev.slice(-999), updated];
         }
       });
     });
@@ -136,17 +136,17 @@ export function GoldChart({ currentTick, openPositions = [], pendingOrders = [] 
     return allEma21.slice(startIndex, endIndex);
   }, [candles, allEma21, visibleCount, scrollOffset]);
 
-  // Zoom In / Out Handlers
+  // Zoom In / Out Handlers with Deep Macro / Micro Zoom
   const handleZoom = useCallback((direction: "in" | "out") => {
     setVisibleCount((prev) => {
-      if (direction === "in") return Math.max(15, prev - 10);
-      return Math.min(120, prev + 10);
+      if (direction === "in") return Math.max(15, prev - 15);
+      return Math.min(250, prev + 20);
     });
   }, []);
 
   const resetView = () => {
     setScrollOffset(0);
-    setVisibleCount(50);
+    setVisibleCount(65);
   };
 
   const [resizeCount, setResizeCount] = useState(0);
@@ -231,7 +231,15 @@ export function GoldChart({ currentTick, openPositions = [], pendingOrders = [] 
         ctx.stroke();
 
         const d = new Date(c.timestamp);
-        const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        let timeStr = "";
+        if (timeframe === "1D") {
+          timeStr = d.toLocaleDateString([], { month: "short", day: "numeric" });
+        } else if (timeframe === "4H" || timeframe === "1H") {
+          timeStr = `${d.toLocaleDateString([], { month: "short", day: "numeric" })} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}`;
+        } else {
+          timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+        }
+
         ctx.fillStyle = "#64748b";
         ctx.font = "9px JetBrains Mono, monospace";
         ctx.textAlign = "center";
@@ -584,7 +592,7 @@ export function GoldChart({ currentTick, openPositions = [], pendingOrders = [] 
 
           {/* Timeframes */}
           <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5 text-[11px] font-mono shrink-0">
-            {(["1M", "5M", "15M", "1H", "1D"] as TimeFrame[]).map((tf) => (
+            {(["1M", "5M", "15M", "30M", "1H", "4H", "1D"] as TimeFrame[]).map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
