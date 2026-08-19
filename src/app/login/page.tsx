@@ -18,10 +18,10 @@ interface DemoAccount {
 
 const DEMO_PRESETS: DemoAccount[] = [
   { label: "Retail Client (Gold Trader)", role: "client", email: "trader@marketmaker.com", password: "GoldTrader2026!#", desc: "Trade XAU/USD, deposit, request withdrawals" },
-  { label: "Compliance Officer", role: "compliance", email: "compliance@marketmaker.com", password: "KycCompliance2026!#", desc: "Review KYC, audit holds & AML" },
-  { label: "Operations Staff", role: "operations", email: "ops@marketmaker.com", password: "OpsManager2026!#", desc: "Manage client lifecycle & holds" },
-  { label: "Finance / Ledger Admin", role: "finance", email: "finance@marketmaker.com", password: "LedgerFinance2026!#", desc: "Approve deposits, monitor ledger" },
-  { label: "Dealing Desk (Chief Dealer)", role: "dealer", email: "dealer@marketmaker.com", password: "ChiefDealer2026!#", desc: "Market rates, spreads & execution" },
+  // { label: "Compliance Officer", role: "compliance", email: "compliance@marketmaker.com", password: "KycCompliance2026!#", desc: "Review KYC, audit holds & AML" },
+  // { label: "Operations Staff", role: "operations", email: "ops@marketmaker.com", password: "OpsManager2026!#", desc: "Manage client lifecycle & holds" },
+  // { label: "Finance / Ledger Admin", role: "finance", email: "finance@marketmaker.com", password: "LedgerFinance2026!#", desc: "Approve deposits, monitor ledger" },
+  // { label: "Dealing Desk (Chief Dealer)", role: "dealer", email: "dealer@marketmaker.com", password: "ChiefDealer2026!#", desc: "Market rates, spreads & execution" },
   { label: "System Administrator", role: "admin", email: "admin@marketmaker.com", password: "SuperAdmin2026!#", desc: "Full platform governance" },
 ];
 
